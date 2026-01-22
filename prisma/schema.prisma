@@ -1,0 +1,150 @@
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// --- USER & IDENTITY ---
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  username      String?   @unique
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  password      String?   
+  
+  // Semua user mendaftar sebagai 'client' secara default
+  // Opsi upgrade ke 'freelancer' dilakukan via Profile
+  role          String    @default("client") // 'client', 'freelancer', 'captain'
+  
+  // Profile Info
+  company       String?
+  dateOfBirth   DateTime?
+  bio           String?
+
+  // RPG Stats (Diaktifkan/diisi saat user mendaftar sebagai Freelancer)
+  level         Int       @default(1)
+  xp            Int       @default(0)
+  maxXp         Int       @default(1000)
+  speed         Int       @default(0) 
+  logic         Int       @default(0) 
+  aesthetic     Int       @default(0) 
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  quests        Quest[]        @relation("AssignedQuests")
+  activities    ActivityLog[]
+  accounts      Account[]
+  sessions      Session[]
+  
+  // Relasi untuk fitur Client & Chat
+  ownedProjects Project[]      @relation("ClientProjects")
+  sentMessages     Message[]   @relation("SentMessages")
+  receivedMessages Message[]   @relation("ReceivedMessages")
+}
+
+// --- NEXTAUTH MODELS ---
+model Account {
+  id                 String  @id @default(cuid())
+  userId             String
+  type               String
+  provider           String
+  providerAccountId  String
+  refresh_token      String? @db.Text
+  access_token       String? @db.Text
+  expires_at         Int?
+  token_type         String?
+  scope              String?
+  id_token           String? @db.Text
+  session_state      String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// --- QUEST SYSTEM ---
+model Quest {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  reward      Int      @default(100)
+  difficulty  String   @default("medium")
+  status      String   @default("todo")
+  commitLink  String?
+  videoLink   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  assignedToId String?
+  assignedTo   User?   @relation("AssignedQuests", fields: [assignedToId], references: [id])
+}
+
+// --- CHAT SYSTEM (Untuk Fitur Direct Comms Client & Freelancer) ---
+model Message {
+  id          String   @id @default(cuid())
+  text        String   @db.Text
+  createdAt   DateTime @default(now())
+  
+  senderId    String
+  sender      User     @relation("SentMessages", fields: [senderId], references: [id])
+  
+  receiverId  String
+  receiver    User     @relation("ReceivedMessages", fields: [receiverId], references: [id])
+  
+  isRead      Boolean  @default(false)
+}
+
+// --- PROJECT & CRYOSLEEP ---
+model Project {
+  id            String    @id @default(cuid())
+  name          String
+  status        String    @default("maintenance") // 'maintenance', 'summoned', 'active'
+  
+  retainerFee   Int       @default(100)
+  emergencyRate Int       @default(200)
+  lastSummoned  DateTime?
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Menghubungkan Project ke Client (User dengan role 'client')
+  clientId      String?
+  client        User?     @relation("ClientProjects", fields: [clientId], references: [id])
+}
+
+// --- ACTIVITY LOG ---
+model ActivityLog {
+  id        String   @id @default(cuid())
+  action    String
+  detail    String
+  xpGained  Int      @default(0)
+  createdAt DateTime @default(now())
+  
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+}
