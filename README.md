@@ -1,85 +1,114 @@
-🐸 Leap.io - Gamified SaaS Platform v4.2
+<p align="center">🐸 Leap.io - Gamified SaaS Platform v4.2</p>
 
-Leap.io adalah platform manajemen proyek revolusioner yang menggabungkan elemen RPG (Role-Playing Game) dengan alur kerja profesional. Platform ini dirancang untuk memisahkan secara taktis peran antara Client (Project Owner), Freelancer (Elite Agents), dan Captain (Admin/PM).
+<p align="center">
+<img src="https://www.google.com/search?q=https://img.shields.io/badge/Version-4.2.0--STABLE-green%3Fstyle%3Dfor-the-badge%26logo%3Dprobot" alt="Version" />
+<img src="https://www.google.com/search?q=https://img.shields.io/badge/Framework-Next.js%252015-black%3Fstyle%3Dfor-the-badge%26logo%3Dnext.js" alt="Framework" />
+<img src="https://www.google.com/search?q=https://img.shields.io/badge/Database-PostgreSQL-blue%3Fstyle%3Dfor-the-badge%26logo%3Dpostgresql" alt="Database" />
+<img src="https://www.google.com/search?q=https://img.shields.io/badge/Auth-NextAuth.js%2520v5-764ABC%3Fstyle%3Dfor-the-badge%26logo%3Dauth0" alt="Auth" />
+</p>
 
-🚀 Fitur yang Telah Diimplementasikan
+🌐 Overview
 
-1. 🎭 Sistem Identitas & RPG (Identity Protocol)
+Leap.io adalah platform manajemen proyek revolusioner yang menggabungkan elemen RPG (Role-Playing Game) dengan alur kerja profesional. Platform ini dirancang untuk memisahkan secara taktis peran antara Client, Freelancer, dan Captain.
 
-Multi-Role System: Autentikasi berbasis peran (Client, Freelancer, Captain) menggunakan NextAuth v5.
+🛠️ Arsitektur Teknologi & Spesifikasi
 
-Onboarding Flow: Alur inisialisasi identitas dari Client ke Freelancer dengan pemilihan "Class" (Frontend Paladin, Backend Necromancer, dll).
+Komponen
 
-RPG Stats: Statistik dinamis (Logic, Speed, Aesthetic) yang memengaruhi profil agen.
+Teknologi
 
-Leveling Engine: Sistem XP otomatis yang memicu "Level Up" saat quest disetujui, lengkap dengan scaling XP yang meningkat tiap level.
+Frontend
 
-2. 🤖 AI Recruitment & Intelligence
+Next.js 15 (App Router), Tailwind CSS, Lucide Icons
 
-AI Recruiter: Antarmuka terminal cerdas untuk mencari dan memindai database freelancer berdasarkan kriteria misi.
+Backend
 
-AI Lab: Ruang simulasi arsitektur untuk memvalidasi logika sistem sebelum coding dimulai.
+Server Actions, Prisma ORM
 
-Active Scanning: Deteksi otomatis agen elit yang tersedia di pangkalan data.
+Database
 
-3. ⚔️ Quest Board (Kanban Operations)
+PostgreSQL (Deployed via Supabase/Neon)
 
-Gamified SDLC: Papan tugas interaktif dengan status: To Do, In Combat (Coding), Loot Drop (Submission), dan Completed.
+Autentikasi
 
-Proof of Work: Protokol wajib unggah link Github Commit dan Video Demo untuk setiap submission tugas.
+NextAuth.js v5 (Identity & Role Protection)
 
-Optimistic UI: Perpindahan status tugas yang instan di sisi pengguna dengan sinkronisasi database di latar belakang.
+Animasi
 
-4. 🛰️ Protokol Komunikasi (Direct Uplink)
+Tailwind Animate & CSS Keyframes (Marquee effect)
 
-Real-time Database Messaging: Sistem chat nyata antara Client dan Freelancer yang tersimpan di database Prisma.
+🚀 Fitur Utama (System Modules)
 
-Active Uplinks Sidebar: Navigasi cerdas di sidebar yang mendeteksi percakapan aktif, memungkinkan pengguna melanjutkan chat secara instan.
+🎭 1. Sistem Identitas & RPG (Identity Protocol)
 
-Client Shield: Saluran komunikasi terenkripsi khusus antara Captain dan Client untuk menjaga fokus developer.
+Multi-Role Hierarchy: Pemisahan akses ketat antara Client, Freelancer, dan Captain.
 
-Dynamic UI Navigation: Tombol navigasi cerdas yang berubah menjadi "Initialize Scan" jika belum ada percakapan aktif.
+Onboarding Path: Alur pemilihan "Class" (misal: Frontend Paladin, Backend Necromancer) untuk inisialisasi statistik.
 
-5. ❄️ Cryosleep Chamber (Passive Income)
+RPG Analytics: Dashboard statistik dinamis (Logic, Speed, Aesthetic) yang berkembang seiring penyelesaian proyek.
 
-Maintenance Mode: Sistem pemeliharaan proyek yang menghasilkan pendapatan pasif (Retainer Fee).
+Leveling Engine: Akumulasi XP otomatis untuk "Level Up" dengan kurva kesulitan yang meningkat.
 
-Emergency Summon: Mekanisme darurat di mana klien dapat "mencairkan" proyek dari stasis, memicu Emergency Rate (biaya per jam yang lebih tinggi).
+🤖 2. AI Recruitment & Lab
 
-🛠️ Arsitektur Teknologi
+AI Recruiter: Antarmuka terminal cerdas untuk pemindaian database talenta elit berdasarkan kebutuhan misi.
 
-Framework: Next.js 15 (App Router & Turbopack).
+The AI Lab: Ruang konsultasi arsitektur untuk memvalidasi logika sistem sebelum fase coding dimulai.
 
-Database: PostgreSQL (via Supabase/Neon).
+Uplink Synchronization: Deteksi agen aktif secara real-time di pangkalan data.
 
-ORM: Prisma Client untuk interaksi data yang type-safe.
+⚔️ 3. Quest Board (Kanban Operations)
 
-Auth: NextAuth.js v5 (JWT Strategy).
+Tactical Board: Kanban board interaktif dengan status: To Do → In Combat → Loot Drop → Completed.
 
-UI/UX: Tailwind CSS dengan Lucide React Icons.
+Proof of Work Protocol: Kewajiban melampirkan GitHub Commit dan Video Demo sebelum klaim reward.
 
-Animations: Tailwind Animate & CSS Keyframes (Marquee effect).
+Optimistic Sync: Perubahan status instan tanpa refresh untuk pengalaman pengguna yang mulus.
 
-📂 Struktur Data Utama (Prisma)
+🛰️ 4. Protokol Komunikasi (Direct Uplink)
 
-User: Menyimpan profil, role, statistik RPG (XP, Level, Logic, dll).
+Unified Chat System: Jalur komunikasi terenkripsi yang tersimpan permanen di database Prisma.
 
-Project: Mengelola operasional proyek dan status Cryosleep.
+Active Uplinks Sidebar: Navigasi cerdas yang mendeteksi partner chat terbaru untuk kelanjutan koordinasi instan.
 
-Quest: Detail tugas, reward XP, dan bukti kerja (Commit/Video).
+Security Shield: Saluran khusus antara Captain dan Client untuk proteksi operasional.
 
-Message: Transmisi data chat antara pengirim dan penerima.
+❄️ 5. Cryosleep Chamber (Passive Income)
 
-ActivityLog: Catatan intelijen untuk setiap aksi penting di platform.
+Stasis Mode: Manajemen proyek jangka panjang yang menghasilkan Retainer Fee bulanan.
 
-📜 Log Pengerjaan Terakhir
+Emergency Summon: Mekanisme "mencairkan" proyek dengan tarif darurat (Emergency Rate) saat dibutuhkan segera.
 
-Integrasi Chat: Menghubungkan terminal chat AI Recruiter ke halaman chat nyata.
+📂 Struktur Data & Intelijen (Prisma)
 
-Sidebar Optimization: Penambahan seksi "Active Uplinks" dan perbaikan Duplicate Key Error pada navigasi.
+User: Pusat profil, role, dan statistik RPG.
 
-Path Stability: Perbaikan jalur impor menggunakan alias @/ dan jalur relatif untuk menjamin stabilitas build.
+Project: Entitas operasional dan status Cryosleep.
 
-English Language Standard: Standarisasi seluruh label UI ke dalam Bahasa Inggris untuk kesan profesional SaaS global.
+Quest: Unit tugas teknis dan bukti penyelesaian.
 
-Generated by Leap-OS Intelligence System.
+Message: Jalur transmisi data komunikasi antar agen.
+
+ActivityLog: Rekam jejak aktivitas intelijen seluruh sistem.
+
+📜 Log Operasi Terakhir (Last Sync)
+
+[!IMPORTANT]
+Update v4.2.0 Highlights:
+
+Navigation Fix: Perbaikan Duplicate Key Error pada sidebar menggunakan ID unik.
+
+Direct Uplinks: Integrasi navigasi chat langsung ke menu utama sidebar.
+
+Path Stability: Standarisasi rute menggunakan @/ alias dan jalur relatif untuk build yang lebih stabil.
+
+Language Update: Migrasi seluruh UI Label ke Standar Bahasa Inggris Internasional.
+
+<p align="center">
+<i>Generated & Secured by Leap-OS Intelligence System. All rights reserved.</i>
+
+
+
+
+🐸 <b>LEAP.IO // BUILD FASTER. PLAY HARDER.</b>
+</p>
