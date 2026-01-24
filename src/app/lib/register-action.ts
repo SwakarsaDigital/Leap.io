@@ -19,8 +19,10 @@ const RegisterSchema = z.object({
     .min(6, "Password minimal harus 6 karakter"),
   name: z.string()
     .min(2, "Nama lengkap harus diisi"),
+  // Data Profil Tambahan sesuai Schema Database
   company: z.string().optional(),
-  dateOfBirth: z.string().optional(),
+  bio: z.string().optional(),
+  dateOfBirth: z.string().optional(), // Akan dikonversi ke Date di logic
 });
 
 /**
@@ -32,6 +34,9 @@ export type RegisterState = {
     email?: string[];
     password?: string[];
     name?: string[];
+    company?: string[];
+    bio?: string[];
+    dateOfBirth?: string[];
   };
   message?: string | null;
 };
@@ -54,7 +59,8 @@ export async function registerUser(prevState: RegisterState | undefined, formDat
     };
   }
 
-  const { email, password, username, name, company, dateOfBirth } = validatedFields.data;
+  // Destructure semua field yang valid
+  const { email, password, username, name, company, dateOfBirth, bio } = validatedFields.data;
 
   try {
     // C. Cek duplikasi Identitas (Email & Username)
@@ -68,27 +74,38 @@ export async function registerUser(prevState: RegisterState | undefined, formDat
     });
 
     if (existingUser) {
-      const field = existingUser.email === email ? 'Email' : 'Codename';
-      return { message: `${field} sudah terhubung dengan identitas lain.` };
+      // Tentukan field mana yang duplikat untuk pesan error yang spesifik
+      const isEmailDuplicate = existingUser.email === email;
+      return { 
+        message: isEmailDuplicate 
+          ? 'Email ini sudah terdaftar.' 
+          : 'Codename (Username) ini sudah digunakan agen lain.' 
+      };
     }
 
     // D. Enkripsi Password menggunakan Bcrypt
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // E. Simpan User Baru ke Database
-    // Sesuai Instruksi: Default ROLE adalah 'client'
+    // Sesuai Instruksi: Default ROLE adalah 'client' dan field disamakan dengan Schema Prisma
     const newUser = await prisma.user.create({
       data: {
         name,
         username,
         email,
         password: hashedPassword,
+        
+        // Profile Info (Sesuai model User)
         company: company || null,
+        bio: bio || null,
         dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : null,
+        
         role: 'client', // DIPAKSA: Semua pendaftar baru menjadi Client
+        
+        // Generate Avatar otomatis berdasarkan inisial nama
         image: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=020617&color=3b82f6`,
         
-        // Inisialisasi statistik RPG (0 untuk Client)
+        // Inisialisasi statistik RPG (Default 0 untuk Client/New User)
         level: 1,
         xp: 0,
         maxXp: 1000,
@@ -99,13 +116,17 @@ export async function registerUser(prevState: RegisterState | undefined, formDat
     });
 
     // F. Catat ke Activity Log sistem
-    await prisma.activityLog.create({
-      data: {
-        action: 'IDENTITY_CREATED',
-        detail: `Identitas CLIENT baru dibuat untuk @${username}.`,
-        userId: newUser.id,
-      }
-    });
+    try {
+        await prisma.activityLog.create({
+        data: {
+            action: 'IDENTITY_CREATED',
+            detail: `Identitas CLIENT baru dibuat untuk @${username}.`,
+            userId: newUser.id,
+        }
+        });
+    } catch (logError) {
+        console.warn("Gagal membuat activity log (non-fatal):", logError);
+    }
 
     console.log(`>>> [SYSTEM] Identity established for @${username} as CLIENT.`);
     

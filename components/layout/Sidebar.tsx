@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { 
   LayoutDashboard, 
   Sword, 
@@ -18,32 +20,26 @@ import {
 } from 'lucide-react';
 
 /**
- * Menggunakan alias '@/' untuk memastikan resolusi jalur yang stabil di Next.js.
- * Alias ini merujuk ke direktori utama (biasanya 'src' atau root proyek).
+ * Menggunakan path relatif untuk import yang stabil.
  */
 import { logout } from '../../src/app/lib/auth-actions'; 
 import { getRecentChatPartners } from '../../src/app/lib/actions';
 
 interface SidebarProps {
-  userRole?: string; // Peran pengguna: 'client', 'freelancer', atau 'captain'
+  userRole?: string; // 'client', 'freelancer', atau 'captain'
 }
 
 /**
  * Komponen Utama Sidebar: App
  * Mengelola navigasi operasional dan akses cepat ke jalur komunikasi (Uplinks).
  */
-export default function App({ userRole }: SidebarProps) {
-  const [pathname, setPathname] = useState('');
+export default function Sidebar({ userRole }: SidebarProps) {
+  const pathname = usePathname(); // Menggunakan hook bawaan Next.js
   const [activePartners, setActivePartners] = useState<any[]>([]);
   const [isLoadingChats, setIsLoadingChats] = useState(true);
 
-  // Sinkronisasi rute saat ini dan ambil data partner chat terbaru
+  // Sinkronisasi data partner chat terbaru
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      // Menyertakan query string untuk mendeteksi status view aktif (misal: AI Recruiter)
-      setPathname(window.location.pathname + window.location.search);
-    }
-
     const fetchPartners = async () => {
       try {
         const partners = await getRecentChatPartners();
@@ -59,7 +55,6 @@ export default function App({ userRole }: SidebarProps) {
   }, []);
 
   // 1. Tentukan item menu berdasarkan Peran Pengguna
-  // Setiap item memiliki 'id' unik sebagai kunci React untuk menghindari Duplicate Key Error
   let menuItems: any[] = [];
 
   if (userRole === 'client') {
@@ -77,12 +72,14 @@ export default function App({ userRole }: SidebarProps) {
       { id: 'menu-cryosleep', href: '/guild/cryosleep', label: 'Cryosleep', icon: Activity },
       { id: 'menu-lab', href: '/lab', label: 'The Lab', icon: FlaskConical },
       { id: 'menu-recruitment-hub', href: '/?view=recruiter', label: 'Recruitment Hub', icon: Bot, isSpecial: true },
+      // Update: Mengarah ke halaman Inbox Utama
       { 
         id: 'menu-client-comms',
-        href: activePartners.length > 0 ? `/client/chat/${activePartners[0].id}` : '#', 
-        label: 'Client Comms', 
+        href: '/guild/messages', 
+        label: 'Comms Terminal', 
         icon: MessageSquare,
-        disabled: activePartners.length === 0
+        // Tidak didisable agar user selalu bisa cek inbox
+        disabled: false 
       },
       { id: 'menu-profile', href: '/guild/profile', label: 'Identity Profile', icon: User },
     ];
@@ -101,12 +98,12 @@ export default function App({ userRole }: SidebarProps) {
   return (
     <aside className="w-64 bg-slate-900 border-r border-slate-800 h-screen flex flex-col p-4 fixed left-0 top-0 z-50 shadow-2xl font-sans text-left">
       {/* Branding Header */}
-      <a href="/" className="flex items-center gap-3 mb-10 px-2 group cursor-pointer no-underline">
+      <Link href="/" className="flex items-center gap-3 mb-10 px-2 group cursor-pointer no-underline">
         <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center font-black text-black group-hover:rotate-12 transition-all shadow-lg shadow-green-900/20">
           L
         </div>
         <h1 className="text-xl font-black text-white tracking-tighter group-hover:text-green-400 transition-colors uppercase italic">Leap.io</h1>
-      </a>
+      </Link>
 
       {/* Navigasi Utama */}
       <nav className="space-y-1 overflow-y-auto custom-scrollbar pr-1 max-h-[50%]">
@@ -118,12 +115,14 @@ export default function App({ userRole }: SidebarProps) {
             : 'bg-green-600/10 text-green-400 border-green-500/20 shadow-inner';
 
           return (
-            <a
-              key={item.id} // Menggunakan ID statis yang unik
+            <Link
+              key={item.id}
               href={item.href}
               className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-bold text-sm group no-underline border border-transparent ${
                 isActive ? activeStyle : 'text-slate-500 hover:bg-slate-800 hover:text-slate-200'
               } ${item.isSpecial ? 'border-indigo-500/20 bg-indigo-500/5 text-indigo-400 hover:bg-indigo-500/10' : ''} ${item.isAdmin ? 'mt-8 border-red-900/30 text-red-500/60 hover:text-red-400' : ''} ${item.disabled ? 'opacity-30 cursor-not-allowed grayscale' : ''}`}
+              aria-disabled={item.disabled}
+              onClick={(e) => item.disabled && e.preventDefault()}
             >
               <item.icon size={18} className={`${isActive ? 'animate-pulse' : 'group-hover:scale-110 transition-transform'}`} />
               <div className="flex flex-col">
@@ -135,7 +134,7 @@ export default function App({ userRole }: SidebarProps) {
                   {item.badge}
                 </span>
               )}
-            </a>
+            </Link>
           );
         })}
       </nav>
@@ -159,24 +158,33 @@ export default function App({ userRole }: SidebarProps) {
                 <div className="h-8 bg-slate-800 rounded-lg animate-pulse w-3/4"></div>
             </div>
           ) : activePartners.length > 0 ? (
-            activePartners.map((partner) => (
-              <a
-                key={`uplink-${partner.id}`}
-                href={`/client/chat/${partner.id}`}
-                className={`flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all group no-underline border border-transparent hover:bg-slate-800 ${
+            activePartners.map((partner) => {
+              // Tentukan URL berdasarkan role:
+              // Client -> /client/chat/[freelancerId]
+              // Freelancer -> /guild/messages/[clientId]
+              const chatUrl = userRole === 'client' 
+                ? `/client/chat/${partner.id}`
+                : `/guild/messages/${partner.id}`;
+
+              return (
+                <Link
+                  key={`uplink-${partner.id}`}
+                  href={chatUrl}
+                  className={`flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all group no-underline border border-transparent hover:bg-slate-800 ${
                     pathname.includes(partner.id) ? 'bg-blue-600/10 text-blue-400 border-blue-500/20' : 'text-slate-400 hover:text-slate-200'
-                }`}
-              >
-                <div className="w-8 h-8 bg-slate-950 rounded-full flex items-center justify-center text-[10px] font-bold border border-slate-800 shadow-inner group-hover:border-blue-500/50 transition-colors shrink-0">
-                  {partner.name?.substring(0, 1).toUpperCase()}
-                </div>
-                <div className="flex-1 min-w-0">
-                    <p className="text-xs font-bold truncate">{partner.name}</p>
-                    <p className="text-[8px] text-slate-600 uppercase font-mono tracking-tighter">Connected</p>
-                </div>
-                <ChevronRight size={12} className="opacity-0 group-hover:opacity-100 transition-opacity" />
-              </a>
-            ))
+                  }`}
+                >
+                  <div className="w-8 h-8 bg-slate-950 rounded-full flex items-center justify-center text-[10px] font-bold border border-slate-800 shadow-inner group-hover:border-blue-500/50 transition-colors shrink-0">
+                    {partner.name?.substring(0, 1).toUpperCase() || '?'}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                      <p className="text-xs font-bold truncate">{partner.name || 'Unknown Agent'}</p>
+                      <p className="text-[8px] text-slate-600 uppercase font-mono tracking-tighter">Connected</p>
+                  </div>
+                  <ChevronRight size={12} className="opacity-0 group-hover:opacity-100 transition-opacity" />
+                </Link>
+              );
+            })
           ) : (
             /* Area kosong jika belum ada partner chat */
             <div className="px-4 py-6 text-center border-2 border-dashed border-slate-800/50 rounded-2xl mx-2 bg-slate-950/20 group hover:border-indigo-500/30 transition-all duration-500">
