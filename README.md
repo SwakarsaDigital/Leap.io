@@ -1,168 +1,114 @@
-🐸 Leap.io - Gamified Project Management Platform
+<p align="center">🐸 Leap.io - Gamified SaaS Platform v4.2</p>
 
-Leap.io adalah platform SaaS revolusioner untuk manajemen proyek berbasis AI dan gamifikasi. Dibangun untuk memisahkan operasional Agency (Swakarsa) dan Product, Leap.io memberikan pengalaman kerja seperti bermain RPG bagi developer (Freelancer) dan kontrol penuh bagi admin (Captain).
+<p align="center">
+<img src="https://www.google.com/search?q=https://img.shields.io/badge/Version-4.2.0--STABLE-green%3Fstyle%3Dfor-the-badge%26logo%3Dprobot" alt="Version" />
+<img src="https://www.google.com/search?q=https://img.shields.io/badge/Framework-Next.js%252015-black%3Fstyle%3Dfor-the-badge%26logo%3Dnext.js" alt="Framework" />
+<img src="https://www.google.com/search?q=https://img.shields.io/badge/Database-PostgreSQL-blue%3Fstyle%3Dfor-the-badge%26logo%3Dpostgresql" alt="Database" />
+<img src="https://www.google.com/search?q=https://img.shields.io/badge/Auth-NextAuth.js%2520v5-764ABC%3Fstyle%3Dfor-the-badge%26logo%3Dauth0" alt="Auth" />
+</p>
 
-🚀 Fitur Utama (Features)
+🌐 Overview
 
-1. 🏰 Guild Hall (Dashboard Profil)
+Leap.io adalah platform manajemen proyek revolusioner yang menggabungkan elemen RPG (Role-Playing Game) dengan alur kerja profesional. Platform ini dirancang untuk memisahkan secara taktis peran antara Client, Freelancer, dan Captain.
 
-Gamified Stats: Menampilkan Level, XP, dan atribut RPG (Logic, Speed, Aesthetic) yang diambil real-time dari database.
+🛠️ Arsitektur Teknologi & Spesifikasi
 
-Progress Bar: Visualisasi XP bar yang dinamis.
+Komponen
 
-Activity Log: Riwayat aktivitas user (menyelesaikan quest, naik level).
+Teknologi
 
-Role-Based View: Tampilan berbeda untuk 'Freelancer' dan 'Captain'.
+Frontend
 
-2. ⚔️ Quest Board (Manajemen Tugas)
+Next.js 15 (App Router), Tailwind CSS, Lucide Icons
 
-Kanban System: Papan tugas interaktif dengan kolom: To Do, In Combat, Loot Drop, dan Completed.
+Backend
 
-Protocol: No Proof, No Loot: Freelancer wajib mengunggah link Github Commit dan Video Demo saat submit tugas.
+Server Actions, Prisma ORM
 
-Visual Cues: Indikator kesulitan (Easy, Medium, Hard) dengan kode warna.
+Database
 
-Optimistic UI: Perubahan status terasa instan di UI sambil sinkronisasi ke database di latar belakang.
+PostgreSQL (Deployed via Supabase/Neon)
 
-3. ❄️ Cryosleep (Passive Income Module)
+Autentikasi
 
-Maintenance Mode: Daftar proyek lama yang sedang "tidur" (stasis).
+NextAuth.js v5 (Identity & Role Protection)
 
-Emergency Summon: Simulasi klien menekan tombol darurat. Kartu berubah merah, rate per jam naik.
+Animasi
 
-Retainer Fee: Menampilkan potensi pendapatan pasif dari proyek yang stabil.
+Tailwind Animate & CSS Keyframes (Marquee effect)
 
-4. 🛡️ Client Shield (Secure Communication)
+🚀 Fitur Utama (System Modules)
 
-Exclusive Channel: Fitur chat khusus yang hanya bisa diakses oleh Captain.
+🎭 1. Sistem Identitas & RPG (Identity Protocol)
 
-Encrypted UI: Desain antarmuka bergaya terminal/hacker.
+Multi-Role Hierarchy: Pemisahan akses ketat antara Client, Freelancer, dan Captain.
 
-Freelancer Barrier: Mencegah freelancer berkomunikasi langsung dengan klien untuk menghindari scope creep.
+Onboarding Path: Alur pemilihan "Class" (misal: Frontend Paladin, Backend Necromancer) untuk inisialisasi statistik.
 
-5. 👑 Captain's Bridge (Admin Panel)
+RPG Analytics: Dashboard statistik dinamis (Logic, Speed, Aesthetic) yang berkembang seiring penyelesaian proyek.
 
-Review System: Captain bisa menyetujui (Approve) atau menolak (Refactor Hammer) tugas yang masuk.
+Leveling Engine: Akumulasi XP otomatis untuk "Level Up" dengan kurva kesulitan yang meningkat.
 
-Level Up Engine: Sistem otomatis yang menaikkan level user jika XP mencukupi setelah approval.
+🤖 2. AI Recruitment & Lab
 
-Access Control: Halaman ini dilindungi Middleware, tidak bisa diakses oleh user biasa.
+AI Recruiter: Antarmuka terminal cerdas untuk pemindaian database talenta elit berdasarkan kebutuhan misi.
 
-6. 🧠 The Lab (AI Interface)
+The AI Lab: Ruang konsultasi arsitektur untuk memvalidasi logika sistem sebelum fase coding dimulai.
 
-AI Simulation: Antarmuka chat dengan efek mengetik (streaming text) untuk brainstorming arsitektur sistem (Simulasi).
+Uplink Synchronization: Deteksi agen aktif secara real-time di pangkalan data.
 
-🛠️ Teknologi (Tech Stack)
+⚔️ 3. Quest Board (Kanban Operations)
 
-Framework: Next.js 15 (App Router) - React Framework modern.
+Tactical Board: Kanban board interaktif dengan status: To Do → In Combat → Loot Drop → Completed.
 
-Database: PostgreSQL (via Neon/Supabase) - Database relasional yang kuat.
+Proof of Work Protocol: Kewajiban melampirkan GitHub Commit dan Video Demo sebelum klaim reward.
 
-ORM: Prisma - Untuk interaksi database yang aman (Type-safe).
+Optimistic Sync: Perubahan status instan tanpa refresh untuk pengalaman pengguna yang mulus.
 
-Auth: NextAuth.js v5 (Beta) - Sistem login aman dengan Role-based Access Control (RBAC).
+🛰️ 4. Protokol Komunikasi (Direct Uplink)
 
-Styling: Tailwind CSS - Utility-first CSS framework.
+Unified Chat System: Jalur komunikasi terenkripsi yang tersimpan permanen di database Prisma.
 
-Icons: Lucide React - Ikon vektor yang ringan.
+Active Uplinks Sidebar: Navigasi cerdas yang mendeteksi partner chat terbaru untuk kelanjutan koordinasi instan.
 
-📂 Struktur Proyek (Project Structure)
+Security Shield: Saluran khusus antara Captain dan Client untuk proteksi operasional.
 
-leap-io-app/
-├── app/
-│   ├── (platform)/          # Group route (opsional)
-│   ├── api/                 # API Routes (NextAuth)
-│   ├── captain/             # Halaman khusus Admin (Bridge, Shield)
-│   ├── guild/               # Halaman Profil & Cryosleep
-│   ├── lab/                 # Halaman AI Tools
-│   ├── lib/                 # Konfigurasi Backend (Prisma, Actions)
-│   ├── login/               # Halaman Login
-│   ├── quests/              # Halaman Kanban Board
-│   ├── components/          # Komponen UI (Sidebar, Cards, Modal)
-│   ├── layout.tsx           # Layout global + Auth Check
-│   └── page.tsx             # Homepage Redirect
-├── prisma/
-│   ├── schema.prisma        # Definisi Database (User, Quest, Project)
-│   └── seed.ts              # Data awal (Dummy Data)
-├── public/                  # Aset statis
-├── types/                   # Definisi TypeScript custom
-├── auth.ts                  # Konfigurasi NextAuth Utama
-├── auth.config.ts           # Logika Middleware Auth
-├── middleware.ts            # Satpam rute (Proteksi Halaman)
-└── .env                     # Variabel Lingkungan (Rahasia)
+❄️ 5. Cryosleep Chamber (Passive Income)
 
+Stasis Mode: Manajemen proyek jangka panjang yang menghasilkan Retainer Fee bulanan.
 
-⚡ Cara Menjalankan (Getting Started)
+Emergency Summon: Mekanisme "mencairkan" proyek dengan tarif darurat (Emergency Rate) saat dibutuhkan segera.
 
-Ikuti langkah ini untuk menjalankan proyek di komputer lokal:
+📂 Struktur Data & Intelijen (Prisma)
 
-1. Persiapan Lingkungan
+User: Pusat profil, role, dan statistik RPG.
 
-Pastikan Node.js sudah terinstal. Buat file .env di root folder:
+Project: Entitas operasional dan status Cryosleep.
 
-# .env
-DATABASE_URL="postgres://user:password@host/db..." # Ganti dengan URL Database Cloud (Neon/Supabase)
-AUTH_SECRET="rahasia_super_panjang_dan_acak_1234567890" # Generate pakai `npx auth secret`
+Quest: Unit tugas teknis dan bukti penyelesaian.
 
+Message: Jalur transmisi data komunikasi antar agen.
 
-2. Install Dependencies
+ActivityLog: Rekam jejak aktivitas intelijen seluruh sistem.
 
-npm install
+📜 Log Operasi Terakhir (Last Sync)
 
+[!IMPORTANT]
+Update v4.2.0 Highlights:
 
-3. Setup Database
+Navigation Fix: Perbaikan Duplicate Key Error pada sidebar menggunakan ID unik.
 
-Sinkronisasi skema Prisma ke database cloud dan isi data awal:
+Direct Uplinks: Integrasi navigasi chat langsung ke menu utama sidebar.
 
-npx prisma db push
-npx prisma db seed
+Path Stability: Standarisasi rute menggunakan @/ alias dan jalur relatif untuk build yang lebih stabil.
 
+Language Update: Migrasi seluruh UI Label ke Standar Bahasa Inggris Internasional.
 
-4. Jalankan Server
+<p align="center">
+<i>Generated & Secured by Leap-OS Intelligence System. All rights reserved.</i>
 
-npm run dev
 
 
-Buka http://localhost:3000 di browser.
 
-🔑 Akun Demo (Credentials)
-
-Gunakan akun ini untuk masuk dan mencoba fitur yang berbeda:
-
-Role
-
-Email
-
-Akses Fitur
-
-Freelancer
-
-dev@leap.io
-
-Guild, Quests, Lab, Cryosleep
-
-Captain
-
-captain@leap.io
-
-Semua di atas + Captain's Bridge, Client Shield
-
-(Password tidak diperlukan dalam mode dev ini, sistem menggunakan email-only login simulation).
-
-📜 Log Pengerjaan (Changelog)
-
-Inisiasi: Pemisahan repo dari Agency, setup Next.js App Router.
-
-UI/UX: Implementasi Sidebar responsif, tema gelap (Dark Mode), dan maskot Kodok.
-
-Database: Migrasi dari SQLite lokal ke PostgreSQL Cloud.
-
-Fitur:
-
-Implementasi Server Actions untuk mutasi data (Submit Loot, Approve Quest).
-
-Integrasi NextAuth v5 untuk proteksi halaman dan sidebar dinamis.
-
-Pembuatan modul gamifikasi (XP Calculation & Level Up Logic).
-
-Documentation generated by Leap.io AI Assistant.
+🐸 <b>LEAP.IO // BUILD FASTER. PLAY HARDER.</b>
+</p>
