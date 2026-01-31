@@ -1,17 +1,21 @@
-// app/lib/auth-actions.ts
 'use server';
 
-import { signIn, signOut } from '../../auth'; // Import dari file auth.ts yang baru kita buat
+import { signIn, signOut } from '../../auth';
 import { AuthError } from 'next-auth';
 
+// Authenticate user
 export async function authenticate(
   prevState: string | undefined,
   formData: FormData,
 ) {
   try {
-    // Memanggil fungsi signIn bawaan NextAuth
-    // 'credentials' sesuai dengan provider yang kita set di auth.ts
-    await signIn('credentials', formData);
+    // Mengubah FormData menjadi object agar kita bisa menyisipkan properti redirectTo
+    const data = Object.fromEntries(formData);
+
+    await signIn('credentials', {
+      ...data,
+      redirectTo: '/', // PENTING: Redirect ke landing page ('/') setelah login berhasil
+    });
   } catch (error) {
     if (error instanceof AuthError) {
       switch (error.type) {
@@ -26,5 +30,6 @@ export async function authenticate(
 }
 
 export async function logout() {
-  await signOut();
+  // PENTING: Redirect ke landing page ('/') setelah logout
+  await signOut({ redirectTo: '/' });
 }

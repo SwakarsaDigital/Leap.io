@@ -3,11 +3,12 @@ import { JWT } from "next-auth/jwt"
 
 declare module "next-auth" {
   /**
-   * Memperluas tipe 'Session' bawaan untuk menyertakan 'role'
+   * Memperluas tipe 'Session' bawaan untuk menyertakan 'role' dan 'id'
    * Ini digunakan saat memanggil `auth()` atau `useSession()`
    */
   interface Session {
     user: {
+      id?: string
       role?: string
     } & DefaultSession["user"]
   }
@@ -22,9 +23,10 @@ declare module "next-auth" {
 
 declare module "next-auth/jwt" {
   /**
-   * Memperluas tipe 'JWT' bawaan untuk menyimpan 'role' di token
+   * Memperluas tipe 'JWT' bawaan untuk menyimpan 'role' dan 'id' di token
    */
   interface JWT {
+    id?: string
     role?: string
   }
 }

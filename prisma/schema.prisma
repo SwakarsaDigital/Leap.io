@@ -5,7 +5,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "postgresql" // Pastikan URL database di .env benar
   url      = env("DATABASE_URL")
 }
 
@@ -19,8 +19,6 @@ model User {
   image         String?
   password      String?   
   
-  // Semua user mendaftar sebagai 'client' secara default
-  // Opsi upgrade ke 'freelancer' dilakukan via Profile
   role          String    @default("client") // 'client', 'freelancer', 'captain'
   
   // Profile Info
@@ -28,10 +26,12 @@ model User {
   dateOfBirth   DateTime?
   bio           String?
 
-  // RPG Stats (Diaktifkan/diisi saat user mendaftar sebagai Freelancer)
+  // RPG Stats
   level         Int       @default(1)
   xp            Int       @default(0)
   maxXp         Int       @default(1000)
+  
+  // Core Attributes
   speed         Int       @default(0) 
   logic         Int       @default(0) 
   aesthetic     Int       @default(0) 
@@ -40,15 +40,14 @@ model User {
   updatedAt     DateTime  @updatedAt
 
   // Relations
-  quests        Quest[]        @relation("AssignedQuests")
-  activities    ActivityLog[]
-  accounts      Account[]
-  sessions      Session[]
+  quests         Quest[]        @relation("AssignedQuests")
+  activities     ActivityLog[]
+  accounts       Account[]
+  sessions       Session[]
   
-  // Relasi untuk fitur Client & Chat
-  ownedProjects Project[]      @relation("ClientProjects")
-  sentMessages     Message[]   @relation("SentMessages")
-  receivedMessages Message[]   @relation("ReceivedMessages")
+  ownedProjects    Project[]    @relation("ClientProjects")
+  sentMessages     Message[]    @relation("SentMessages")
+  receivedMessages Message[]    @relation("ReceivedMessages")
 }
 
 // --- NEXTAUTH MODELS ---
@@ -95,20 +94,28 @@ model Quest {
   reward      Int      @default(100)
   difficulty  String   @default("medium")
   status      String   @default("todo")
+  
+  // Loot Drop Requirements
   commitLink  String?
   videoLink   String?
+  
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   
+  // Relasi ke User (Assignee)
   assignedToId String?
-  assignedTo   User?   @relation("AssignedQuests", fields: [assignedToId], references: [id])
+  assignedTo   User?    @relation("AssignedQuests", fields: [assignedToId], references: [id])
+
+  // FIX: Menambahkan Relasi ke Project
+  projectId    String?
+  project      Project? @relation(fields: [projectId], references: [id])
 }
 
-// --- CHAT SYSTEM (Untuk Fitur Direct Comms Client & Freelancer) ---
+// --- CHAT SYSTEM ---
 model Message {
-  id          String   @id @default(cuid())
-  text        String   @db.Text
-  createdAt   DateTime @default(now())
+  id        String   @id @default(cuid())
+  text      String   @db.Text
+  createdAt DateTime @default(now())
   
   senderId    String
   sender      User     @relation("SentMessages", fields: [senderId], references: [id])
@@ -123,7 +130,7 @@ model Message {
 model Project {
   id            String    @id @default(cuid())
   name          String
-  status        String    @default("maintenance") // 'maintenance', 'summoned', 'active'
+  status        String    @default("maintenance")
   
   retainerFee   Int       @default(100)
   emergencyRate Int       @default(200)
@@ -132,9 +139,11 @@ model Project {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  // Menghubungkan Project ke Client (User dengan role 'client')
   clientId      String?
   client        User?     @relation("ClientProjects", fields: [clientId], references: [id])
+
+  // FIX: Relasi balik ke Quest
+  quests        Quest[]
 }
 
 // --- ACTIVITY LOG ---

@@ -4,6 +4,7 @@ export const authConfig = {
   // 1. Definisikan halaman kustom
   pages: {
     signIn: '/login', // Mengarahkan user yang belum login ke sini
+    newUser: '/register',
   },
   
   callbacks: {
@@ -13,14 +14,17 @@ export const authConfig = {
      */
     authorized({ auth, request: { nextUrl } }) {
       const isLoggedIn = !!auth?.user;
-      const userRole = (auth?.user as any)?.role; // Ambil role (captain/freelancer)
+      // Menggunakan 'as any' sementara untuk menghindari error type jika interface User belum diupdate
+      const userRole = (auth?.user as any)?.role; 
 
       // Tentukan grup rute
       const isOnCaptainBridge = nextUrl.pathname.startsWith('/captain');
+      
       const isOnDashboard = 
         nextUrl.pathname.startsWith('/guild') || 
         nextUrl.pathname.startsWith('/quests') || 
-        nextUrl.pathname.startsWith('/lab');
+        nextUrl.pathname.startsWith('/lab') ||
+        nextUrl.pathname.startsWith('/client'); // Ditambahkan agar area Client juga terproteksi
       
       const isAuthPage = nextUrl.pathname === '/login' || nextUrl.pathname === '/register';
 
@@ -29,11 +33,13 @@ export const authConfig = {
       // 1. Proteksi Halaman Captain (Admin Only)
       if (isOnCaptainBridge) {
         if (isLoggedIn) {
-          if (userRole === 'captain') return true; 
+          // Cek role (support uppercase/lowercase untuk keamanan)
+          if (userRole === 'captain' || userRole === 'CAPTAIN') return true; 
+          
           // Jika sudah login tapi bukan captain, lempar ke Guild Hall (cegah loop redirect)
           return Response.redirect(new URL('/guild', nextUrl));
         }
-        return false; // Belum login, redirect ke /login
+        return false; // Belum login, redirect ke /login handled by NextAuth
       }
 
       // 2. Proteksi Dashboard Umum (Butuh Login)
@@ -44,6 +50,14 @@ export const authConfig = {
 
       // 3. Redirect User yang sudah login agar tidak bisa akses halaman Login/Register
       if (isLoggedIn && isAuthPage) {
+        // Redirect cerdas berdasarkan role
+        if (userRole === 'captain' || userRole === 'CAPTAIN') {
+          return Response.redirect(new URL('/captain', nextUrl));
+        }
+        if (userRole === 'CLIENT') {
+          return Response.redirect(new URL('/client', nextUrl));
+        }
+        // Default untuk Freelancer
         return Response.redirect(new URL('/guild', nextUrl));
       }
 
@@ -70,8 +84,8 @@ export const authConfig = {
      */
     async session({ session, token }) {
       if (session.user && token.role) {
-        session.user.role = token.role as string;
-        session.user.id = token.id as string;
+        (session.user as any).role = token.role as string;
+        (session.user as any).id = token.id as string;
       }
       return session;
     },

@@ -108,7 +108,7 @@ export async function createProject(name: string, retainerFee: number) {
         name,
         retainerFee: Number(retainerFee),
         clientId: session.user.id,
-        status: 'active'
+        status: 'active',
       }
     });
 
@@ -133,17 +133,28 @@ export async function createProject(name: string, retainerFee: number) {
  * --- QUEST & KANBAN SYSTEM ---
  */
 
+// Aliased for compatibility with different component calls
+export async function moveQuestCard(questId: string, newStatus: string) {
+  return updateQuestStatus(questId, newStatus);
+}
+
 export async function updateQuestStatus(questId: string, newStatus: string) {
   try {
     await prisma.quest.update({
       where: { id: questId },
       data: { status: newStatus },
     });
-    revalidatePath('/quests');
+    revalidatePath('/guild/quests');
+    revalidatePath('/captain/missions');
     return { success: true };
   } catch (error) {
     return { success: false, error: 'Gagal update status' };
   }
+}
+
+// Aliased for compatibility
+export async function submitQuestLoot(questId: string, commitLink: string, videoLink: string) {
+    return submitLoot(questId, commitLink, videoLink);
 }
 
 export async function submitLoot(questId: string, commitLink: string, videoLink: string) {
@@ -153,20 +164,29 @@ export async function submitLoot(questId: string, commitLink: string, videoLink:
     await prisma.quest.update({
       where: { id: questId },
       data: {
-        status: 'loot_drop',
+        status: 'review', // Standardized to 'review' for loot_drop
         commitLink: commitLink,
         videoLink: videoLink,
       },
     });
     
-    revalidatePath('/quests');
+    revalidatePath('/guild/quests');
     return { success: true };
   } catch (error) {
     return { success: false, error: 'Gagal mengirim loot' };
   }
 }
 
-export async function reviewQuest(questId: string, decision: 'approve' | 'reject', userId?: string, xpReward?: number) {
+// Aliased for compatibility
+export async function reviewQuestLoot(questId: string, decision: 'approve' | 'reject') {
+    // We need to fetch the quest to get userId and reward if we reuse logic
+    const quest = await prisma.quest.findUnique({ where: { id: questId } });
+    if (!quest) return { success: false, message: 'Quest not found' };
+    
+    return reviewQuest(questId, decision, quest.assignedToId || '', quest.reward);
+}
+
+export async function reviewQuest(questId: string, decision: 'approve' | 'reject', userId: string, reward: number) {
   try {
     if (decision === 'approve') {
       if (!userId) throw new Error("User ID missing");
@@ -174,9 +194,9 @@ export async function reviewQuest(questId: string, decision: 'approve' | 'reject
       const currentUser = await prisma.user.findUnique({ where: { id: userId } });
       if (!currentUser) throw new Error("User not found");
 
-      let newXp = currentUser.xp + (xpReward || 0);
-      let newLevel = currentUser.level;
-      let newMaxXp = currentUser.maxXp;
+      let newXp = (currentUser.xp || 0) + (reward || 0);
+      let newLevel = currentUser.level || 1;
+      let newMaxXp = currentUser.maxXp || 1000;
       let leveledUp = false;
 
       while (newXp >= newMaxXp) {
@@ -196,7 +216,7 @@ export async function reviewQuest(questId: string, decision: 'approve' | 'reject
             maxXp: newMaxXp,
             activities: {
               create: [
-                { action: "Quest Completed", detail: "Loot approved by Captain", xpGained: xpReward || 0 },
+                { action: "Quest Completed", detail: "Loot approved by Captain", xpGained: reward || 0 },
                 ...(leveledUp ? [{ action: "LEVEL UP!", detail: `Reached Level ${newLevel}.`, xpGained: 0 }] : [])
               ]
             }
@@ -204,14 +224,14 @@ export async function reviewQuest(questId: string, decision: 'approve' | 'reject
         })
       ]);
     } else {
-      await prisma.quest.update({ where: { id: questId }, data: { status: 'todo' } });
+      await prisma.quest.update({ where: { id: questId }, data: { status: 'in_progress' } }); // Back to combat
     }
 
-    revalidatePath('/captain'); 
-    revalidatePath('/guild');   
-    revalidatePath('/quests');  
+    revalidatePath('/captain/missions'); 
+    revalidatePath('/guild/quests');   
     return { success: true };
   } catch (error) {
+    console.error("Review failed:", error);
     return { success: false, error: 'Review failed' };
   }
 }
@@ -261,6 +281,79 @@ export async function getAvailableFreelancers() {
 }
 
 /**
+ * --- CLIENT ACTIONS ---
+ */
+export async function launchProject(formData: FormData) {
+  try {
+    const session = await auth();
+    if (!session?.user?.email) {
+      return { success: false, message: 'Unauthorized' };
+    }
+
+    // Ambil data user dari database untuk mendapatkan ID
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email },
+    });
+
+    if (!user) {
+        return { success: false, message: 'User not found' };
+    }
+
+    const name = formData.get('name') as string;
+    const description = formData.get('description') as string;
+    const budget = Number(formData.get('budget'));
+    const freelancerId = formData.get('freelancerId') as string; // Bisa string kosong
+
+    if (!name || !description || !budget) {
+      return { success: false, message: 'Semua kolom wajib diisi' };
+    }
+
+    // Buat Proyek Baru
+    const project = await prisma.project.create({
+      data: {
+        name,
+        retainerFee: budget, // Mapping budget to retainerFee
+        clientId: user.id,
+        status: 'active',
+      },
+    });
+
+    // Jika ada freelancer yang dipilih, buat Quest awal atau assign project?
+    if (freelancerId && freelancerId !== '') {
+        await prisma.quest.create({
+            data: {
+                title: `Initial Setup: ${name}`,
+                description: description,
+                reward: Math.floor(budget * 0.1), // 10% XP dari budget
+                difficulty: 'medium',
+                status: 'todo',
+                projectId: project.id,
+                assignedToId: freelancerId
+            }
+        });
+    } else {
+        // Buat Open Quest
+        await prisma.quest.create({
+            data: {
+                title: `Project Kickoff: ${name}`,
+                description: description,
+                reward: Math.floor(budget * 0.1),
+                difficulty: 'medium',
+                status: 'open', // Open for grabs
+                projectId: project.id
+            }
+        });
+    }
+
+    revalidatePath('/client');
+    return { success: true, message: 'Project launched successfully' };
+  } catch (error) {
+    console.error('Failed to launch project:', error);
+    return { success: false, message: 'Database error: Failed to launch project.' };
+  }
+}
+
+/**
  * --- CHAT & COMMUNICATIONS (DIRECT UPLINK) ---
  */
 
@@ -288,7 +381,11 @@ export async function getRecentChatPartners() {
     messages.forEach((msg) => {
       const partner = msg.senderId === session.user.id ? msg.receiver : msg.sender;
       if (partner && partner.id !== session.user.id && !partnersMap.has(partner.id)) {
-        partnersMap.set(partner.id, partner);
+        partnersMap.set(partner.id, {
+            ...partner,
+            // FIX: Menggunakan 'text' dan casting 'as any' untuk keamanan jika tipe belum update
+            lastMessage: (msg as any).text || (msg as any).content || 'New Message' 
+        });
       }
     });
 
@@ -307,13 +404,15 @@ export async function sendMessage(receiverId: string, text: string) {
   try {
     const message = await prisma.message.create({
       data: {
-        text,
+        text: text, // FIX: Menggunakan 'text' sebagai nama kolom di database
         senderId: session.user.id,
         receiverId: receiverId,
       }
     });
 
-    revalidatePath('/client');
+    revalidatePath('/client'); 
+    revalidatePath(`/client/chat/${receiverId}`);
+    revalidatePath(`/guild/messages/${receiverId}`);
     return { success: true, message };
   } catch (error) {
     console.error("Chat error:", error);
@@ -336,7 +435,7 @@ export async function getChatHistory(otherUserId: string) {
       },
       orderBy: { createdAt: 'asc' },
       include: {
-        sender: { select: { name: true, role: true } }
+        sender: { select: { name: true, role: true, image: true } }
       }
     });
   } catch (error) {

@@ -15,13 +15,14 @@ import {
   Activity,
   Bot,
   MessageSquare,
-  ChevronRight,
-  Loader2
+  Target,
+  Terminal,
+  Cpu,
+  Loader2,
+  Users,
+  LucideIcon
 } from 'lucide-react';
 
-/**
- * Menggunakan path relatif untuk import yang stabil.
- */
 import { logout } from '../../src/app/lib/auth-actions'; 
 import { getRecentChatPartners } from '../../src/app/lib/actions';
 
@@ -29,205 +30,242 @@ interface SidebarProps {
   userRole?: string; // 'client', 'freelancer', atau 'captain'
 }
 
+interface MenuItem {
+  href: string;
+  label: string;
+  icon: LucideIcon;
+  desc: string;
+  isSpecial?: boolean;
+  isAdmin?: boolean;
+}
+
 /**
- * Komponen Utama Sidebar: App
- * Mengelola navigasi operasional dan akses cepat ke jalur komunikasi (Uplinks).
+ * Sidebar Terpadu dengan Struktur Routing Konsisten
+ * Client -> /client/*
+ * Freelancer -> /guild/*
+ * Captain -> /captain/*
  */
 export default function Sidebar({ userRole }: SidebarProps) {
-  const pathname = usePathname(); // Menggunakan hook bawaan Next.js
+  const pathname = usePathname();
   const [activePartners, setActivePartners] = useState<any[]>([]);
   const [isLoadingChats, setIsLoadingChats] = useState(true);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
-  // Sinkronisasi data partner chat terbaru
+  // Sinkronisasi Uplink (Chat Aktif)
   useEffect(() => {
     const fetchPartners = async () => {
       try {
         const partners = await getRecentChatPartners();
         setActivePartners(partners);
       } catch (error) {
-        console.error("Gagal sinkronisasi data uplink:", error);
+        console.error("Gagal sinkronisasi uplink:", error);
       } finally {
         setIsLoadingChats(false);
       }
     };
-
     fetchPartners();
   }, []);
 
-  // 1. Tentukan item menu berdasarkan Peran Pengguna
-  let menuItems: any[] = [];
-
-  if (userRole === 'client') {
-    // MENU KHUSUS CLIENT (Project Owner)
-    menuItems = [
-      { id: 'menu-war-room', href: '/client', label: 'War Room', icon: ShieldCheck },
-      { id: 'menu-ai-recruiter', href: '/?view=recruiter', label: 'AI Recruiter', icon: Zap, isSpecial: true },
-      { id: 'menu-profile', href: '/guild/profile', label: 'Identity Profile', icon: User },
-    ];
-  } else {
-    // MENU KHUSUS FREELANCER / KAPTEN
-    menuItems = [
-      { id: 'menu-guild-hall', href: '/guild', label: 'Guild Hall', icon: LayoutDashboard },
-      { id: 'menu-quest-board', href: '/quests', label: 'Quest Board', icon: Sword },
-      { id: 'menu-cryosleep', href: '/guild/cryosleep', label: 'Cryosleep', icon: Activity },
-      { id: 'menu-lab', href: '/lab', label: 'The Lab', icon: FlaskConical },
-      { id: 'menu-recruitment-hub', href: '/?view=recruiter', label: 'Recruitment Hub', icon: Bot, isSpecial: true },
-      // Update: Mengarah ke halaman Inbox Utama
-      { 
-        id: 'menu-client-comms',
-        href: '/guild/messages', 
-        label: 'Comms Terminal', 
-        icon: MessageSquare,
-        // Tidak didisable agar user selalu bisa cek inbox
-        disabled: false 
-      },
-      { id: 'menu-profile', href: '/guild/profile', label: 'Identity Profile', icon: User },
-    ];
-    
-    if (userRole === 'captain') {
-      menuItems.push({ 
-        id: 'menu-captain-bridge',
-        href: '/captain', 
-        label: "Captain's Bridge", 
-        icon: ShieldAlert, 
-        isAdmin: true 
-      });
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    try {
+      await logout();
+    } catch (error) {
+      console.error("Gagal terminasi sesi:", error);
+      setIsLoggingOut(false);
     }
-  }
+  };
+
+  // --- 1. IDENTITAS VISUAL & TEMA (DIPISAH DARI SELEKSI) ---
+  const themes = {
+    client: {
+      accent: 'blue-500',
+      bg: 'bg-blue-600/10',
+      text: 'text-blue-400',
+      border: 'border-blue-500/20',
+      gradient: 'from-blue-500 to-indigo-600',
+      tag: 'COMMANDER'
+    },
+    captain: {
+      accent: 'red-500',
+      bg: 'bg-red-600/10',
+      text: 'text-red-400',
+      border: 'border-red-500/20',
+      gradient: 'from-red-500 to-orange-600',
+      tag: 'OVERSEER'
+    },
+    freelancer: {
+      accent: 'green-500',
+      bg: 'bg-green-600/10',
+      text: 'text-green-400',
+      border: 'border-green-500/20',
+      gradient: 'from-green-500 to-emerald-600',
+      tag: 'AGENT'
+    }
+  };
+
+  // Pilih tema aktif berdasarkan userRole
+  const theme = themes[userRole as keyof typeof themes] || themes.freelancer;
+
+  // --- 2. KONFIGURASI MENU KONSISTEN (/role/...) ---
+  const getMenuItems = (): MenuItem[] => {
+    switch (userRole) {
+      case 'client':
+        return [
+          { href: '/client', label: 'War Room', icon: ShieldCheck, desc: 'Project Overview' },
+          { href: '/client/messages', label: 'Secure Comms', icon: MessageSquare, desc: 'Direct Channel' },
+          { href: '/client/recruitment', label: 'AI Recruiter', icon: Zap, isSpecial: true, desc: 'Deploy New Squad' },
+          { href: '/client/profile', label: 'Identity', icon: User, desc: 'Organization Info' },
+        ];
+      case 'captain':
+        return [
+          { href: '/captain', label: "Captain's Bridge", icon: ShieldAlert, isAdmin: true, desc: 'Command Center' },
+          { href: '/captain/roster', label: 'Squad Roster', icon: Users, desc: 'Manage Agents' },
+          { href: '/captain/missions', label: 'Mission Board', icon: Target, desc: 'Active Ops' },
+          { href: '/captain/messages', label: 'Comms Terminal', icon: MessageSquare, desc: 'Intercepts' },
+          { href: '/captain/lab', label: 'Tactical Lab', icon: FlaskConical, desc: 'R&D Oversight' },
+        ];
+      default: // Freelancer
+        return [
+          { href: '/guild', label: 'Guild Hall', icon: LayoutDashboard, desc: 'Identity & XP' },
+          { href: '/guild/quests', label: 'Quest Board', icon: Sword, desc: 'Available Missions' },
+          { href: '/guild/messages', label: 'Comms Terminal', icon: MessageSquare, desc: 'Mission Directives' },
+          { href: '/guild/cryosleep', label: 'Cryosleep', icon: Activity, desc: 'Status Pause' },
+          { href: '/guild/lab', label: 'The Lab', icon: FlaskConical, desc: 'R&D Experiments' },
+          { href: '/guild/profile', label: 'Identity Profile', icon: User, desc: 'Gear & Attributes' },
+        ];
+    }
+  };
+
+  const menuItems = getMenuItems();
+
+  // --- 3. HELPER UNTUK LINK CHAT ---
+  const getChatLink = (partnerId: string) => {
+    switch (userRole) {
+      case 'client': return `/client/chat/${partnerId}`;
+      case 'captain': return `/captain/messages/${partnerId}`;
+      default: return `/guild/messages/${partnerId}`;
+    }
+  };
 
   return (
-    <aside className="w-64 bg-slate-900 border-r border-slate-800 h-screen flex flex-col p-4 fixed left-0 top-0 z-50 shadow-2xl font-sans text-left">
-      {/* Branding Header */}
+    <aside className="w-64 bg-[#0B1120] border-r border-white/5 h-screen flex flex-col p-4 fixed left-0 top-0 z-50 shadow-2xl font-sans text-left overflow-hidden">
+      
+      {/* BRANDING */}
       <Link href="/" className="flex items-center gap-3 mb-10 px-2 group cursor-pointer no-underline">
-        <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center font-black text-black group-hover:rotate-12 transition-all shadow-lg shadow-green-900/20">
+        <div className={`w-10 h-10 bg-gradient-to-br ${theme.gradient} rounded-xl flex items-center justify-center font-black text-black group-hover:rotate-12 transition-all shadow-lg`}>
           L
         </div>
-        <h1 className="text-xl font-black text-white tracking-tighter group-hover:text-green-400 transition-colors uppercase italic">Leap.io</h1>
+        <div className="flex flex-col">
+          <h1 className="text-xl font-black text-white tracking-tighter uppercase italic leading-none">Leap.io</h1>
+          <span className={`text-[8px] font-mono font-bold tracking-[0.2em] ${theme.text} mt-1`}>{theme.tag} MODE</span>
+        </div>
       </Link>
 
-      {/* Navigasi Utama */}
-      <nav className="space-y-1 overflow-y-auto custom-scrollbar pr-1 max-h-[50%]">
-        <p className="text-[9px] text-slate-600 font-bold uppercase tracking-[0.2em] mb-2 px-4">Operations</p>
+      {/* NAVIGATION MENU */}
+      <nav className="space-y-1 overflow-y-auto custom-scrollbar pr-1 max-h-[55%]">
+        <p className="text-[9px] text-slate-600 font-bold uppercase tracking-[0.2em] mb-4 px-4">Directives</p>
+        
         {menuItems.map((item) => {
-          const isActive = pathname === item.href;
-          const activeStyle = userRole === 'client' 
-            ? 'bg-blue-600/10 text-blue-400 border-blue-500/20 shadow-inner' 
-            : 'bg-green-600/10 text-green-400 border-green-500/20 shadow-inner';
+          // Cek aktif jika path persis sama atau diawali path tersebut (untuk nested route)
+          const isActive = item.href.length > 10 
+            ? pathname.startsWith(item.href) 
+            : pathname === item.href;
 
+          const activeClass = `${theme.bg} ${theme.text} ${theme.border} shadow-inner`;
+          
           return (
             <Link
-              key={item.id}
+              key={item.href}
               href={item.href}
               className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-bold text-sm group no-underline border border-transparent ${
-                isActive ? activeStyle : 'text-slate-500 hover:bg-slate-800 hover:text-slate-200'
-              } ${item.isSpecial ? 'border-indigo-500/20 bg-indigo-500/5 text-indigo-400 hover:bg-indigo-500/10' : ''} ${item.isAdmin ? 'mt-8 border-red-900/30 text-red-500/60 hover:text-red-400' : ''} ${item.disabled ? 'opacity-30 cursor-not-allowed grayscale' : ''}`}
-              aria-disabled={item.disabled}
-              onClick={(e) => item.disabled && e.preventDefault()}
+                isActive ? activeClass : 'text-slate-500 hover:bg-white/5 hover:text-slate-200'
+              } ${item.isSpecial ? 'border-indigo-500/20 bg-indigo-500/5 text-indigo-400 mt-4' : ''} ${item.isAdmin ? 'bg-red-500/10 text-red-500 border-red-500/20 mb-4' : ''}`}
             >
               <item.icon size={18} className={`${isActive ? 'animate-pulse' : 'group-hover:scale-110 transition-transform'}`} />
               <div className="flex flex-col">
                 <span>{item.label}</span>
-                {item.description && <span className="text-[8px] text-slate-600 font-normal uppercase tracking-tighter">{item.description}</span>}
-              </div>
-              {item.badge && (
-                <span className="ml-auto bg-blue-600 text-white text-[10px] px-1.5 py-0.5 rounded-full font-mono">
-                  {item.badge}
+                <span className={`text-[8px] font-normal uppercase tracking-tighter ${isActive ? 'text-current opacity-70' : 'text-slate-600'}`}>
+                  {item.desc}
                 </span>
-              )}
+              </div>
             </Link>
           );
         })}
       </nav>
 
-      {/* SEKSI ACTIVE UPLINKS (Daftar Chat Aktif) */}
-      <div className="mt-8 flex-1 overflow-y-auto custom-scrollbar pr-1 border-t border-slate-800/50 pt-6">
+      {/* ACTIVE UPLINKS (CHAT) */}
+      <div className="mt-8 flex-1 overflow-y-auto custom-scrollbar pr-1 border-t border-white/5 pt-6">
         <div className="flex items-center justify-between px-4 mb-4">
             <p className="text-[9px] text-slate-600 font-bold uppercase tracking-[0.2em]">Active Uplinks</p>
             {!isLoadingChats && activePartners.length > 0 && (
                 <span className="flex h-2 w-2 relative">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
+                    <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 bg-${theme.accent.split('-')[0]}-400`}></span>
+                    <span className={`relative inline-flex rounded-full h-2 w-2 bg-${theme.accent.split('-')[0]}-500`}></span>
                 </span>
             )}
         </div>
 
         <div className="space-y-1">
           {isLoadingChats ? (
-            <div className="px-4 py-2 space-y-3 opacity-20">
-                <div className="h-8 bg-slate-800 rounded-lg animate-pulse"></div>
-                <div className="h-8 bg-slate-800 rounded-lg animate-pulse w-3/4"></div>
+            <div className="px-4 py-2 flex items-center gap-3 opacity-20">
+                <Loader2 className="animate-spin text-slate-500" size={14} />
+                <span className="text-[10px] font-mono">Syncing...</span>
             </div>
           ) : activePartners.length > 0 ? (
-            activePartners.map((partner) => {
-              // Tentukan URL berdasarkan role:
-              // Client -> /client/chat/[freelancerId]
-              // Freelancer -> /guild/messages/[clientId]
-              const chatUrl = userRole === 'client' 
-                ? `/client/chat/${partner.id}`
-                : `/guild/messages/${partner.id}`;
-
-              return (
-                <Link
-                  key={`uplink-${partner.id}`}
-                  href={chatUrl}
-                  className={`flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all group no-underline border border-transparent hover:bg-slate-800 ${
-                    pathname.includes(partner.id) ? 'bg-blue-600/10 text-blue-400 border-blue-500/20' : 'text-slate-400 hover:text-slate-200'
-                  }`}
-                >
-                  <div className="w-8 h-8 bg-slate-950 rounded-full flex items-center justify-center text-[10px] font-bold border border-slate-800 shadow-inner group-hover:border-blue-500/50 transition-colors shrink-0">
-                    {partner.name?.substring(0, 1).toUpperCase() || '?'}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                      <p className="text-xs font-bold truncate">{partner.name || 'Unknown Agent'}</p>
-                      <p className="text-[8px] text-slate-600 uppercase font-mono tracking-tighter">Connected</p>
-                  </div>
-                  <ChevronRight size={12} className="opacity-0 group-hover:opacity-100 transition-opacity" />
-                </Link>
-              );
-            })
+            activePartners.map((partner) => (
+              <Link
+                key={`uplink-${partner.id}`}
+                href={getChatLink(partner.id)}
+                className={`flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all group no-underline border border-transparent hover:bg-white/5 ${
+                  pathname.includes(partner.id) ? `${theme.bg} ${theme.text}` : 'text-slate-400'
+                }`}
+              >
+                <div className={`w-8 h-8 bg-slate-950 rounded-full flex items-center justify-center text-[10px] font-bold border border-white/5 shrink-0 uppercase group-hover:border-${theme.accent.split('-')[0]}-500/50`}>
+                  {partner.name?.substring(0, 1)}
+                </div>
+                <div className="flex-1 min-w-0">
+                    <p className="text-xs font-bold truncate group-hover:text-white transition-colors">{partner.name || 'Agent'}</p>
+                    <p className="text-[8px] text-slate-600 uppercase font-mono tracking-tighter">Link Stable</p>
+                </div>
+              </Link>
+            ))
           ) : (
-            /* Area kosong jika belum ada partner chat */
-            <div className="px-4 py-6 text-center border-2 border-dashed border-slate-800/50 rounded-2xl mx-2 bg-slate-950/20 group hover:border-indigo-500/30 transition-all duration-500">
-                <Bot size={24} className="mx-auto text-slate-700 mb-3 group-hover:text-indigo-500 transition-colors" />
-                <p className="text-[10px] text-slate-600 leading-relaxed italic px-2">
-                    No active transmissions. Use <span className="text-indigo-400 font-bold">AI Recruiter</span> to start.
-                </p>
+            <div className="px-4 py-6 text-center border border-dashed border-white/5 rounded-2xl mx-2 opacity-30">
+                <Terminal size={20} className="mx-auto text-slate-600 mb-2" />
+                <p className="text-[9px] text-slate-600 italic leading-tight">No active transmissions detected.</p>
             </div>
           )}
         </div>
       </div>
 
-      {/* Footer Area: Indikator Status & Logout */}
-      <div className="mt-auto space-y-4 pt-4 border-t border-slate-800">
-        <div className="p-4 bg-slate-950/50 rounded-2xl border border-white/5 shadow-inner">
-          <p className="text-[9px] text-slate-600 font-bold uppercase tracking-[0.2em] mb-2 text-left">Authenticated As</p>
-          <div className="flex items-center gap-3">
-              <div className="relative flex h-3 w-3">
-                <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${userRole === 'client' ? 'bg-blue-400' : 'bg-green-400'}`}></span>
-                <span className={`relative inline-flex rounded-full h-3 w-3 ${userRole === 'client' ? 'bg-blue-500' : 'bg-green-500'}`}></span>
-              </div>
-              <div className="flex flex-col text-left">
-                <span className="text-xs font-black text-white uppercase tracking-wider">
-                  {userRole === 'client' ? 'Project Owner' : userRole || 'Agent'}
-                </span>
-                <span className="text-[8px] text-slate-500 font-mono italic tracking-tighter uppercase">Leap-OS v4.2.0</span>
-              </div>
-          </div>
+      {/* FOOTER */}
+      <div className="mt-auto pt-4 border-t border-white/5">
+        <div className="px-4 py-3 mb-2 rounded-xl bg-slate-950/50 border border-white/5 flex items-center gap-3">
+           <Cpu size={14} className={theme.text} />
+           <div className="flex flex-col">
+             <span className="text-[9px] text-slate-500 font-mono uppercase tracking-widest">System Status</span>
+             <span className="text-[10px] text-white font-bold uppercase italic">Optimal</span>
+           </div>
         </div>
-
+        
         <button 
-            onClick={() => logout()} 
-            className="w-full flex items-center gap-3 px-4 py-3 text-slate-500 hover:text-red-400 hover:bg-red-900/10 rounded-xl transition-all text-sm font-bold group border border-transparent"
+            onClick={handleLogout} 
+            disabled={isLoggingOut}
+            className="w-full flex items-center gap-3 px-4 py-3 text-slate-500 hover:text-red-400 hover:bg-red-500/10 rounded-xl transition-all text-xs font-black uppercase tracking-widest group disabled:opacity-50"
         >
-            <LogOut size={18} className="group-hover:-translate-x-1 transition-transform" /> 
-            Logout Terminal
+            {isLoggingOut ? (
+              <Loader2 size={16} className="animate-spin" />
+            ) : (
+              <LogOut size={16} className="group-hover:-translate-x-1 transition-transform" /> 
+            )}
+            {isLoggingOut ? 'Terminating...' : 'Abort Mission'}
         </button>
       </div>
 
       <style jsx>{`
-        .custom-scrollbar::-webkit-scrollbar { width: 3px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar { width: 2px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.05); border-radius: 10px; }
       `}</style>
     </aside>
   );
