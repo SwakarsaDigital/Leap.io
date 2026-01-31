@@ -5,7 +5,6 @@ import {
   MessageSquare, 
   Bot, 
   Activity, 
-  ArrowUpRight, 
   TrendingUp, 
   Clock, 
   Layout, 
@@ -19,6 +18,11 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import AiRecruiter from '../../app/components/landing/AiRecruiter';
 import LaunchProjectButton from '../../app/components/client/LaunchProjectButton';
+import ClientProjectCard from './ClientProjectCard'; // Import Client Component baru
+
+// PENTING: Memaksa halaman untuk dirender ulang setiap request
+// Ini memperbaiki masalah status "nyangkut" di cache atau Static Generation
+export const dynamic = 'force-dynamic';
 
 export default async function ClientDashboard() {
   const session = await auth();
@@ -164,23 +168,9 @@ export default async function ClientDashboard() {
                 </div>
                 ) : (
                 <div className="space-y-4">
-                    {projects.map(project => (
-                    <div key={project.id} className="p-4 bg-slate-950/50 border border-slate-800 rounded-2xl group hover:border-blue-500/40 transition-all cursor-pointer">
-                        <div className="flex justify-between items-start mb-3">
-                        <h5 className="text-sm font-bold text-slate-200 group-hover:text-white transition-colors">{project.name}</h5>
-                        <ArrowUpRight size={14} className="text-slate-600 group-hover:text-blue-400" />
-                        </div>
-                        <div className="flex justify-between items-center">
-                        <span className={`text-[9px] px-2 py-0.5 rounded font-mono font-bold tracking-tighter border ${
-                            project.status === 'maintenance' 
-                            ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' 
-                            : 'bg-green-500/10 text-green-400 border-green-500/20'
-                        }`}>
-                            {project.status.toUpperCase()}
-                        </span>
-                        <span className="text-[10px] text-slate-600 font-mono">ID: #{project.id.slice(-6).toUpperCase()}</span>
-                        </div>
-                    </div>
+                    {/* Menggunakan ClientProjectCard untuk handle logika klik & status */}
+                    {projects.map((project: { id: React.Key | null | undefined; }) => (
+                      <ClientProjectCard key={project.id} project={project as any} />
                     ))}
                 </div>
                 )}

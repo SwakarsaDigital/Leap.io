@@ -196,15 +196,6 @@ export default function Sidebar({ userRole }: SidebarProps) {
 
       {/* ACTIVE UPLINKS (CHAT) */}
       <div className="mt-8 flex-1 overflow-y-auto custom-scrollbar pr-1 border-t border-white/5 pt-6">
-        <div className="flex items-center justify-between px-4 mb-4">
-            <p className="text-[9px] text-slate-600 font-bold uppercase tracking-[0.2em]">Active Uplinks</p>
-            {!isLoadingChats && activePartners.length > 0 && (
-                <span className="flex h-2 w-2 relative">
-                    <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 bg-${theme.accent.split('-')[0]}-400`}></span>
-                    <span className={`relative inline-flex rounded-full h-2 w-2 bg-${theme.accent.split('-')[0]}-500`}></span>
-                </span>
-            )}
-        </div>
 
         <div className="space-y-1">
           {isLoadingChats ? (
