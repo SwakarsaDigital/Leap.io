@@ -5,7 +5,8 @@ const { auth } = NextAuth(authConfig);
 
 export default auth((req) => {
   const isLoggedIn = !!req.auth;
-  const userRole = req.auth?.user?.role; // Asumsi role tersimpan di session
+  // Ubah role menjadi UPPERCASE agar selalu cocok dengan enum Prisma (CAPTAIN, CLIENT, GUILD)
+  const userRole = req.auth?.user?.role?.toUpperCase(); 
   const { nextUrl } = req;
   const path = nextUrl.pathname;
 
@@ -20,23 +21,24 @@ export default auth((req) => {
   // Cegah user masuk ke dashboard yang salah
   if (isLoggedIn) {
     // a. Proteksi Halaman Client
-    if (path.startsWith('/client') && userRole !== 'client') {
+    if (path.startsWith('/client') && userRole !== 'CLIENT') {
       // Jika bukan client, kembalikan ke dashboard yang benar
-      const target = userRole === 'captain' ? '/captain' : '/guild';
+      const target = userRole === 'CAPTAIN' ? '/captain' : '/guild';
       return Response.redirect(new URL(target, nextUrl));
     }
 
     // b. Proteksi Halaman Captain
-    if (path.startsWith('/captain') && userRole !== 'captain') {
-      const target = userRole === 'client' ? '/client' : '/guild';
+    if (path.startsWith('/captain') && userRole !== 'CAPTAIN') {
+      const target = userRole === 'CLIENT' ? '/client' : '/guild';
       return Response.redirect(new URL(target, nextUrl));
     }
 
     // c. Proteksi Halaman Guild (Freelancer) - Opsional: Apakah Captain boleh intip?
-    // Disini kita buat ketat: Hanya freelancer yang boleh di /guild root, 
-    // tapi mungkin Captain butuh akses di masa depan. Untuk sekarang kita strict.
-    if (path.startsWith('/guild') && userRole !== 'freelancer' && userRole !== 'captain') { // Captain usually has supervision rights
-       if (userRole === 'client') return Response.redirect(new URL('/client', nextUrl));
+    // Disini kita buat ketat: Hanya GUILD (freelancer) dan CAPTAIN yang boleh di /guild root
+    if (path.startsWith('/guild') && userRole !== 'GUILD' && userRole !== 'CAPTAIN') { 
+       if (userRole === 'CLIENT') {
+           return Response.redirect(new URL('/client', nextUrl));
+       }
     }
   }
 
